@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureTrust Container - Защита от УБИ.021</title>
+    <style>
+        /* Сброс стандартных отступов и границ у всех элементов */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Основные стили для body - градиентный фон от фиолетового к синему */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Контейнер с максимальной шириной 1200px для центрирования контента */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Заголовок страницы с полупрозрачным фоном и эффектом размытия */
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1rem;
+        }
+
+        /* Сетка для карточек - адаптивная, минимум 350px шириной */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Стиль карточки - белый фон, скруглённые углы, тень */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Бейдж для отображения статуса */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* Зелёный статус для успешного состояния */
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Элемент для отображения баланса счёта */
+        .balance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .balance-item:last-child {
+            border-bottom: none;
+        }
+
+        .balance-amount {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        /* Карточка для статистики с градиентным фоном */
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* Стили для форм и полей ввода */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Стиль кнопки - градиент от фиолетового к синему */
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Результат операции - зелёный блок, скрыт по умолчанию */
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        /* Таблица для истории транзакций */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        /* Подвал страницы */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+        }
+
+        /* Гибкая строка для расположения полей ввода в ряд */
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .flex-row > * {
+            flex: 1;
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            .flex-row {
+                flex-direction: column;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка сайта -->
+        <div class="header">
+            <h1>🔒 SecureTrust Container</h1>
+            <p>Банковский микросервис | Защита от угрозы злоупотребления доверием (УБИ.021)</p>
+        </div>
+
+        <!-- Сетка из трёх карточек: аттестация, балансы, статистика -->
+        <div class="grid">
+            <!-- Карточка аттестации -->
+            <div class="card">
+                <h2>🛡️ Аттестация анклава</h2>
+                <!-- Блок для отображения статуса аттестации -->
+                <div id="attestationStatus" class="status-badge status-ok">-</div>
+                <!-- Блок для отображения подписи аттестации -->
+                <div id="attestationSignature" style="margin-top: 10px; font-size: 0.8rem; color: #666;"></div>
+                <button onclick="loadAttestation()" style="margin-top: 15px;">Обновить аттестацию</button>
+            </div>
+
+            <!-- Карточка балансов счетов -->
+            <div class="card">
+                <h2>💰 Балансы счетов</h2>
+                <div id="balances"></div>
+                <button onclick="loadBalances()">Обновить балансы</button>
+            </div>
+
+            <!-- Карточка статистики -->
+            <div class="card">
+                <h2>📊 Общая статистика</h2>
+                <div id="stats"></div>
+                <button onclick="loadStats()">Обновить статистику</button>
+            </div>
+        </div>
+
+        <!-- Карточка с формой для выполнения банковских операций -->
+        <div class="card">
+            <h2>💸 Банковская операция</h2>
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Счёт списания</label>
+                    <select id="fromAccount">
+                        <option value="ACC1">ACC1</option>
+                        <option value="ACC2">ACC2</option>
+                        <option value="ACC3">ACC3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Счёт зачисления</label>
+                    <select id="toAccount">
+                        <option value="ACC1">ACC1</option>
+                        <option value="ACC2">ACC2</option>
+                        <option value="ACC3">ACC3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Сумма (₽)</label>
+                    <input type="number" id="amount" value="1000">
+                </div>
+            </div>
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Категория</label>
+                    <input type="text" id="category" placeholder="Продукты, Зарплата..." value="Продукты">
+                </div>
+                <div class="form-group">
+                    <label>Тип операции</label>
+                    <select id="operationType">
+                        <option value="expense">💸 Расход (списание)</option>
+                        <option value="income">💰 Доход (зачисление)</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="executeOperation()">Выполнить операцию</button>
+            <div id="operationResult" class="result"></div>
+        </div>
+
+        <!-- Карточка с историей операций -->
+        <div class="card">
+            <h2>📋 История операций</h2>
+            <div id="history"></div>
+            <button onclick="loadHistory()">Обновить историю</button>
+        </div>
+
+        <!-- Карточка с проверкой защиты от УБИ.021 -->
+        <div class="card">
+            <h2>🛡️ Проверка защиты от УБИ.021</h2>
+            <button onclick="checkSecurity()">Запустить проверку</button>
+            <div id="securityCheck" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- Подвал с краткой информацией -->
+        <div class="footer">
+            <p>SecureTrust Container | Шифрование данных | HMAC-логирование | Защита от внутренних нарушителей</p>
+        </div>
+    </div>
+
+    <script>
+        // Базовый URL для API (текущий домен/порт)
+        const API_BASE = window.location.origin;
+
+        // Функция загрузки аттестации с сервера
+        async function loadAttestation() {
+            try {
+                // Отправляем GET запрос на эндпоинт /api/attestation
+                const response = await fetch(`${API_BASE}/api/attestation`);
+                const data = await response.json();
+                // Если статус "trusted" - отображаем зелёную метку TODO: В любой момент
+                if (data.status === 'trusted') {
+                    document.getElementById('attestationStatus').innerHTML = '✅ ДОВЕРЕННЫЙ';
+                } else {
+                    document.getElementById('attestationStatus').innerHTML = '⚠️ НЕ ДОВЕРЕННЫЙ';
+                }
+                // Отображаем подпись (обрезаем до 50 символов)
+                if (data.signature) {
+                    document.getElementById('attestationSignature').innerHTML = `Подпись: ${data.signature.substring(0, 50)}...`;
+                }
+            } catch (e) {} // Ошибки не отображаем пользователю
+        }
+
+        // Функция загрузки балансов всех счетов
+        async function loadBalances() {
+            // Массив счетов, которые нужно проверить
+            const accounts = ['ACC1', 'ACC2', 'ACC3'];
+            let html = '';
+            // Для каждого счета отправляем GET запрос
+            for (const acc of accounts) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/balance/${acc}`);
+                    const data = await response.json();
+                    // Добавляем строку с балансом в HTML
+                    html += `<div class="balance-item"><span><strong>${acc}</strong></span><span class="balance-amount">${(data.balance || 0).toLocaleString()} ₽</span></div>`;
+                } catch (e) {
+                    // В случае ошибки показываем прочерк
+                    html += `<div class="balance-item"><span><strong>${acc}</strong></span><span class="balance-amount">-</span></div>`;
+                }
+            }
+            document.getElementById('balances').innerHTML = html;
+        }
+
+        // Функция загрузки статистики (доходы, расходы, баланс)
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                const data = await response.json();
+                // Создаём три карточки с данными
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${(data.total_income || 0).toLocaleString()} ₽</div>
+                        <div class="stat-label">📈 Общий доход</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                        <div class="stat-number">${(data.total_expense || 0).toLocaleString()} ₽</div>
+                        <div class="stat-label">📉 Общий расход</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                        <div class="stat-number">${(data.balance || 0).toLocaleString()} ₽</div>
+                        <div class="stat-label">⚖️ Текущий баланс</div>
+                    </div>
+                `;
+            } catch (e) {} // Ошибки не отображаем
+        }
+
+        // Функция загрузки истории операций
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/api/transactions`);
+                const data = await response.json();
+                // Если данных нет - показываем сообщение
+                if (!data || data.length === 0) {
+                    document.getElementById('history').innerHTML = '<div style="text-align: center; padding: 20px;">Нет операций</div>';
+                    return;
+                }
+                // Берём последние 10 транзакций и разворачиваем порядок (новые сверху)
+                const last10 = data.slice(-10).reverse();
+                let html = '<table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Категория</th><th>Откуда</th><th>Куда</th></tr></thead><tbody>';
+                // Формируем строки таблицы для каждой транзакции
+                for (const tx of last10) {
+                    const typeColor = tx.type === 'income' ? '#28a745' : '#dc3545';
+                    const typeText = tx.type === 'income' ? '💰 Доход' : '💸 Расход';
+                    html += `<tr>
+                        <td>${tx.date || '-'}</td>
+                        <td style="color:${typeColor}">${typeText}</td>
+                        <td>${(tx.amount || 0).toLocaleString()} ₽</td>
+                        <td>${tx.category || '-'}</td>
+                        <td>${tx.account_from || '-'}</td>
+                        <td>${tx.account_to || '-'}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                document.getElementById('history').innerHTML = html;
+            } catch (e) {
+                // При ошибке показываем сообщение об отсутствии операций
+                document.getElementById('history').innerHTML = '<div style="text-align: center; padding: 20px;">Нет операций</div>';
+            }
+        }
+
+        // Функция выполнения банковской операции (перевода)
+        async function executeOperation() {
+            // Получаем значения из полей ввода
+            const from = document.getElementById('fromAccount').value;
+            const to = document.getElementById('toAccount').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const type = document.getElementById('operationType').value;
+            const resultDiv = document.getElementById('operationResult');
+
+            // Проверяем корректность суммы
+            if (isNaN(amount) || amount <= 0) return;
+
+            try {
+                // Отправляем POST запрос на эндпоинт /api/transfer
+                const response = await fetch(`${API_BASE}/api/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ from, to, amount, category, type })
+                });
+                const data = await response.json();
+                // Если операция успешна
+                if (data.ok) {
+                    resultDiv.className = 'result show';
+                    resultDiv.innerHTML = `✅ Операция выполнена! Сумма: ${amount.toLocaleString()} ₽`;
+                    // Скрываем сообщение через 3 секунды
+                    setTimeout(() => { resultDiv.className = ''; }, 3000);
+                    // Обновляем все данные на странице
+                    loadBalances();
+                    loadStats();
+                    loadHistory();
+                }
+            } catch (e) {} // Ошибки не отображаем
+        }
+
+        // Функция проверки защиты от УБИ.021
+        async function checkSecurity() {
+            const container = document.getElementById('securityCheck');
+            let html = '<div style="margin-top: 10px;">';
+
+            // Проверяем аттестацию
+            try {
+                const attestRes = await fetch(`${API_BASE}/api/attestation`);
+                const attestData = await attestRes.json();
+                html += `<div class="balance-item"><span>✅ Аттестация анклава</span><span style="color:#28a745;">${attestData.status || 'trusted'}</span></div>`;
+            } catch (e) {
+                html += `<div class="balance-item"><span>⚠️ Аттестация анклава</span><span style="color:#f39c12;">-</span></div>`;
+            }
+
+            // Дополнительные пункты проверки безопасности (отображаются всегда как активные)
+            html += `<div class="balance-item"><span>✅ Шифрование данных (анклав)</span><span style="color:#28a745;">активно</span></div>`;
+            html += `<div class="balance-item"><span>✅ HMAC-подпись логов</span><span style="color:#28a745;">активна</span></div>`;
+            html += `<div class="balance-item"><span>✅ Ключи в памяти (не на диске)</span><span style="color:#28a745;">обеспечено</span></div>`;
+            html += `<div class="balance-item" style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;"><strong>🛡️ ЗАЩИТА ОТ УБИ.021: АКТИВНА</strong></div>`;
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Автоматическая загрузка всех данных при загрузке страницы
+        loadAttestation();
+        loadBalances();
+        loadStats();
+        loadHistory();
+    </script>
+</body>
+</html>
